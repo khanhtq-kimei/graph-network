@@ -11,3 +11,20 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+@keyframes svg-okr-animation {
+  0% { 
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.svg-main {
+  width: 100vw;
+  height: 100vh;
+  animation: 0.6s ease-in-out 0s 1 normal none running svg-okr-animation;
+  cursor: grab;
+}
+

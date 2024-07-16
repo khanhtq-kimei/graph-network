@@ -36,9 +36,11 @@ function App() {
 
       const svg = d3
         .create("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", `${-width/2} ${-height/2} ${width*2} ${height*2}`)
+        .append("g")
+        // .attr("width", width)
+        // .attr("height", height)
+        // .attr("viewBox", `${-width/2} ${-height/2} ${width*2} ${height*2}`)
+
 
       const link = svg
         .append("g")
@@ -50,127 +52,87 @@ function App() {
         .join("line")
         .attr("stroke-width", 2)
 
-      // const node = svg
-      //   .append("g")
-      //   .selectAll("g")
-      //   .data(nodesData)
-      //   .attr('class', (d) => `graphNode_${d.id}`)
-      //   .join(
-      //     enter => enter.append('circle')
-      //     .attr("r", (d) => {
-      //       switch (d.nodeType) {
-      //         case "root":
-      //           return 100;
-      //         case "goal":
-      //           return 55;
-      //         case "key_result":
-      //           return 30;
-      //         default: return null
-      //       }
-      //     })
-      //     .attr("stroke", (d) => {
-      //       switch (d.nodeType) {
-      //         case "root":
-      //           return "#E8EBF2";
-      //         case "goal":
-      //           return "#669C89";
-      //         case "key_result":
-      //           return "yellow";
-      //           default: return null
-      //       }
-      //     })
-      //     .attr("stroke-width", (d) => {
-      //       switch (d.nodeType) {
-      //         case "root":
-      //           return "6";
-      //         case "goal":
-      //           return "4";
-      //         case "key_result":
-      //           return "2";
-      //           default: return null
-      //       }
-      //     })
-      //     .attr("fill", (d) => {
-      //       switch (d.nodeType) {
-      //         case "root":
-      //           return "#fcfcfc";
-      //         case "goal":
-      //           return "#669C89";
-      //         case "key_result":
-      //           return "yellow";
-      //           default: return null
-      //       }
-      //     }),
-      //     update => update,
-      //     exit => exit.remove()
-      //   );
-
-      // const text = svg
-      //   .append("g")
-      //   .selectAll("g")
-      //   .data(nodesData)
-      //   .join("g")
-      //   .attr('class', (d) => `graphNode_${d.id}`)
-      //   .append('g')
-      //   .append("text")
-      //   .text((d) => d.id)
-      //   .attr('text-anchor', 'middle')
-
-      const node = svg.selectAll("g")
+      const node = svg.append('g')
+      .selectAll("g")
         .data(nodesData)
         .enter()
         .append("g")
         .attr('class', (d) => `graphNode_${d.id}`);
 
-      node.append("circle")
-          .attr("r", (d) => {
-            switch (d.nodeType) {
-              case "root":
-                return 100;
-              case "goal":
-                return 55;
-              case "key_result":
-                return 30;
+      node
+      .append("circle")
+        .attr("r", (d) => {
+          switch (d.nodeType) {
+            case "root":
+              return 100;
+            case "goal":
+              return 55;
+            case "key_result":
+              return 30;
+            default: return null
+          }
+        })
+        .attr("stroke", (d) => {
+          switch (d.nodeType) {
+            case "root":
+              return "#E8EBF2";
+            case "goal":
+              return "#669C89";
+            case "key_result":
+              return "yellow";
               default: return null
-            }
-          })
-          .attr("stroke", (d) => {
-            switch (d.nodeType) {
-              case "root":
-                return "#E8EBF2";
-              case "goal":
-                return "#669C89";
-              case "key_result":
-                return "yellow";
-                default: return null
-            }
-          })
-          .attr("stroke-width", (d) => {
-            switch (d.nodeType) {
-              case "root":
-                return "6";
-              case "goal":
-                return "4";
-              case "key_result":
-                return "2";
-                default: return null
-            }
-          })
-          .attr("fill", (d) => {
-            switch (d.nodeType) {
-              case "root":
-                return "#fcfcfc";
-              case "goal":
-                return "#669C89";
-              case "key_result":
-                return "yellow";
-                default: return null
-            }
-          })
+          }
+        })
+        .attr("stroke-width", (d) => {
+          switch (d.nodeType) {
+            case "root":
+              return "6";
+            case "goal":
+              return "5";
+            case "key_result":
+              return "2";
+              default: return null
+          }
+        })
+        .attr("fill", (d) => {
+          switch (d.nodeType) {
+            case "root":
+              return "#fcfcfc";
+            case "goal":
+              return "#669C89";
+            case "key_result":
+              return "yellow";
+              default: return null
+          }
+        })
+        
 
-      node.append("g").join('g').append("text").text(function(d){
-            return d.id;
-        });
+      const text = node
+      .append("g")
+      .join('g');
+
+      //percent progress
+      text
+        .append("text")
+        .text((d) => {
+          switch (d.nodeType) {
+            case "root":
+              return d.title;
+            case "goal":
+              return `${d.progress*100}%`;
+            case "key_result":
+              return "2";
+              default: return null
+          }
+        })
+        .attr('font-size', 20)
+        .attr('dy', '12')
+        .attr('text-anchor', 'middle')
+
+        // title
+        const titleContainer =  text.append('text').attr('font-size', 14).attr('text-anchor', 'middle')
+
+        
 
       function dragstarted(event) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -207,7 +169,8 @@ function App() {
           .attr("x2", (d) => d.target.x)
           .attr("y2", (d) => d.target.y);
           
-        node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+        node.selectAll('circle').attr("cx", (d) => d.x).attr("cy", (d) => d.y)
+        node.selectAll('text').attr("x", (d) => d.x).attr("y", (d) => d.y)
       });
 
       svgRef.current.appendChild(svg.node());
@@ -216,7 +179,7 @@ function App() {
 
   return (
     <div className="App">
-      <div ref={svgRef} style={{ width: "100vw", height: "100vh" }} />
+      <svg ref={svgRef} className='svg-main'/>
     </div>
   );
 }
