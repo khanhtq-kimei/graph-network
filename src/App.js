@@ -9,6 +9,7 @@ function App() {
 
   const [linksData, setLinksData] = useState([]);
   const [nodesData, setNodesData] = useState([]);
+  const [strategicNode, setStrategicNode] = useState([])
 
   useEffect(() => {
     const node = [];
@@ -18,6 +19,7 @@ function App() {
     links2.forEach((link) => {
       node.push(nodes.find((n) => n.id === link.source));
     });
+    setStrategicNode(node)
     setNodesData([nodeMain, ...node]);
   }, [links, nodes]);
 
@@ -29,7 +31,7 @@ function App() {
       const simulation = d3
         .forceSimulation(nodesData)
         .force( "link", d3.forceLink(linksData).id((d) => d.id).distance((d) => d.nodeType === 'goal' || d.nodeType === 'root' ? '750' : '250'))
-        .force("charge", d3.forceManyBody().strength(-10000))
+        .force("charge", d3.forceManyBody().strength(-36000/strategicNode?.length))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
@@ -37,10 +39,6 @@ function App() {
       const svg = d3
         .create("svg")
         .append("g")
-        // .attr("width", width)
-        // .attr("height", height)
-        // .attr("viewBox", `${-width/2} ${-height/2} ${width*2} ${height*2}`)
-
 
       const link = svg
         .append("g")
@@ -53,14 +51,17 @@ function App() {
         .attr("stroke-width", 2)
 
       const node = svg.append('g')
-      .selectAll("g")
+        .attr('class', 'nodeContainer')
+        .selectAll("nodeContainer")
         .data(nodesData)
+
+      const nodeDetail = node
         .enter()
         .append("g")
         .attr('class', (d) => `graphNode_${d.id}`);
 
-      node
-      .append("circle")
+      nodeDetail
+        .append("circle")
         .attr("r", (d) => {
           switch (d.nodeType) {
             case "root":
@@ -107,9 +108,9 @@ function App() {
         })
         
 
-      const text = node
-      .append("g")
-      .join('g');
+      const text = nodeDetail
+        .append("g")
+        .join('g');
 
       //percent progress
       text
@@ -130,9 +131,14 @@ function App() {
         .attr('text-anchor', 'middle')
 
         // title
-        const titleContainer =  text.append('text').attr('font-size', 14).attr('text-anchor', 'middle')
+      // const titleContainer =  text.append('text').attr('font-size', 14).attr('text-anchor', 'middle')
 
-        
+      
+      const buttonContainer = node
+        .enter()
+        .append('circle')
+        .attr("r" ,  (d) => d.nodeType === 'root' ? 0 : 10)
+        .attr('stroke', '#669C89')
 
       function dragstarted(event) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -154,7 +160,7 @@ function App() {
         event.subject.fy = null;
       }
 
-      node.call(
+      nodeDetail.call(
         d3
           .drag()
           .on("start", dragstarted)
@@ -169,8 +175,13 @@ function App() {
           .attr("x2", (d) => d.target.x)
           .attr("y2", (d) => d.target.y);
           
-        node.selectAll('circle').attr("cx", (d) => d.x).attr("cy", (d) => d.y)
-        node.selectAll('text').attr("x", (d) => d.x).attr("y", (d) => d.y)
+        nodeDetail.selectAll('circle').attr("cx", (d) => d.x).attr("cy", (d) => d.y)
+        nodeDetail.selectAll('text').attr("x", (d) => d.x).attr("y", (d) => d.y)
+        buttonContainer.attr("cx", (d) => {
+          return d.x - d.vx
+        }).attr("cy", (d) => {
+          return d.y - d.vy
+        })
       });
 
       svgRef.current.appendChild(svg.node());
