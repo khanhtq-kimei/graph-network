@@ -7,6 +7,129 @@ function App() {
   const svgRef = useRef();
   const { nodes, links } = data;
 
+  const configNode = {
+    ticksBeforeShowingGraph: 300,
+    forces: {
+        x: {
+            strength: .05
+        },
+        y: {
+            strength: .05
+        },
+        charge: {
+            strength: {
+                root: {
+                    organization: -100
+                },
+                business_unit_root: {
+                    organization: -1e3
+                },
+                goal: {
+                    organization: -1e3,
+                    team: -800,
+                    personal: -200,
+                    business_unit: -200
+                },
+                key_result: {
+                    organization: -1e3,
+                    team: -1e3,
+                    personal: -1e3,
+                    business_unit: -200
+                }
+            }
+        },
+        link: {
+            distance: {
+                business_unit_root: {
+                    root: 250,
+                    goal: 300,
+                    key_result: 125
+                },
+                goal: {
+                    root: 250,
+                    goal: 300,
+                    key_result: 125,
+                    business_unit_root: 300
+                },
+                key_result: {
+                    goal: 125,
+                    business_unit_root: 125
+                }
+            },
+            strength: {
+                business_unit_root: {
+                    root: 2,
+                    goal: 2,
+                    key_result: 2
+                },
+                goal: {
+                    root: 2,
+                    goal: 2,
+                    key_result: 2,
+                    business_unit_root: 2
+                },
+                key_result: {
+                    goal: 2,
+                    business_unit_root: 2
+                }
+            },
+            iterations: 1
+        },
+        collision: {
+            radius: {
+                root: {
+                    organization: 200
+                },
+                business_unit_root: {
+                    organization: 120
+                },
+                goal: {
+                    organization: 120,
+                    team: 80,
+                    personal: 40,
+                    business_unit: 40
+                },
+                key_result: {
+                    organization: 48,
+                    team: 20,
+                    personal: 10,
+                    business_unit: 40
+                }
+            },
+            strength: 1,
+            iterations: 1
+        }
+    }
+  };
+
+  const configCircle = {
+      forces: {
+          radial: {
+              radius: 250,
+              strength: {
+                  root: {
+                      organization: 2
+                  },
+                  business_unit_root: {
+                      organization: 2
+                  },
+                  goal: {
+                      business_unit: 2,
+                      organization: 2,
+                      team: 2,
+                      personal: 2
+                  },
+                  key_result: {
+                      business_unit: 2,
+                      organization: 2,
+                      team: 2,
+                      personal: 2
+                  }
+              }
+          }
+      }
+  };
+
   const [linksData, setLinksData] = useState([]);
   const [nodesData, setNodesData] = useState([]);
   const [strategicNode, setStrategicNode] = useState([])
@@ -14,12 +137,22 @@ function App() {
   useEffect(() => {
     const node = [];
     const nodeMain = nodes.find((item) => item.nodeType === "root");
-    const links2 = links.filter((item) => item.target === nodeMain.id);
-    setLinksData(links2);
-    links2.forEach((link) => {
+    const strategicLink = links.filter((item) => item.target === nodeMain.id);
+
+
+    strategicLink.forEach((link) => {
       node.push(nodes.find((n) => n.id === link.source));
     });
+
+    //link strategic 1 child 
+    const childStrategicLink = links.filter((item) => item.target === node?.[1]?.id);
+    childStrategicLink.forEach((link) => {
+      node.push(nodes.find((n) => n.id === link.source));
+    });
+    
+    
     setStrategicNode(node)
+    setLinksData([...strategicLink, ...childStrategicLink]);
     setNodesData([nodeMain, ...node]);
   }, [links, nodes]);
 
@@ -30,11 +163,70 @@ function App() {
   
       const simulation = d3
         .forceSimulation(nodesData)
-        .force( "link", d3.forceLink(linksData).id((d) => d.id).distance((d) => d.nodeType === 'goal' || d.nodeType === 'root' ? '750' : '250'))
-        .force("charge", d3.forceManyBody().strength(-36000/strategicNode?.length))
+        .force()
+        .force("link", d3.forceLink(linksData).id((d) => d.id)
+            .distance((d, _, ds) => {
+              console.log("🚀 ~ .distance ~ ds:", ds)
+              switch (d.nodeType) {
+                
+                default: 
+                  break;
+              }
+
+              return 100
+            })
+        )
+        .force("charge", d3.forceManyBody().strength((d) => {
+          switch (d.nodeType) {
+            case 'root':
+              if (d.organization === 'root') {
+                return  -100
+              }
+              else return -3400;
+            case 'business_unit_root':
+              if (d.organization === 'root') {
+                return  -1e3
+              }
+            // eslint-disable-next-line no-fallthrough
+            case 'goal':
+              switch (d.goalKind) {
+                case 'organization':
+                  return -2500;
+                  case 'team':
+                    return -30;
+                  case 'personal':
+                    return -10;
+                  case 'business_unit':
+                      return '-2'
+                default:
+                  break;
+              }
+            // eslint-disable-next-line no-fallthrough
+            case 'key_result': 
+              switch (d.goalKind) {
+                case 'organization':
+                  return -100;
+                  case 'team':
+                    return -10;
+                  case 'personal':
+                    return -10;
+                  case 'business_unit':
+                      return '-200'
+                default:
+                  break;
+              }
+            // eslint-disable-next-line no-fallthrough
+            default:
+              break;
+          }
+        }))
         .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("x", d3.forceX())
-        .force("y", d3.forceY())
+        .force("x", {
+          strength: 0.05
+        })
+        .force("y", {
+          strength: 0.05
+        })
 
       const svg = d3
         .create("svg")
@@ -52,7 +244,7 @@ function App() {
 
       const node = svg.append('g')
         .attr('class', 'nodeContainer')
-        .selectAll("nodeContainer")
+        .selectAll(".nodeContainer")
         .data(nodesData)
 
       const nodeDetail = node
@@ -134,7 +326,7 @@ function App() {
       // const titleContainer =  text.append('text').attr('font-size', 14).attr('text-anchor', 'middle')
 
       
-      const buttonContainer = node
+      const buttonContainer = nodeDetail
         .enter()
         .append('circle')
         .attr("r" ,  (d) => d.nodeType === 'root' ? 0 : 10)
@@ -177,10 +369,8 @@ function App() {
           
         nodeDetail.selectAll('circle').attr("cx", (d) => d.x).attr("cy", (d) => d.y)
         nodeDetail.selectAll('text').attr("x", (d) => d.x).attr("y", (d) => d.y)
-        buttonContainer.attr("cx", (d) => {
-          return d.x - d.vx
-        }).attr("cy", (d) => {
-          return d.y - d.vy
+        buttonContainer.attr('transform', (d) => {
+          return 'translate(' + 0.8 * 250 + ',0)';
         })
       });
 
