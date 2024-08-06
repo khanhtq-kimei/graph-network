@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import data from './data';
+import { data } from "./dataKWS";
 
 export const loadGraph = () => {
     const svg = d3.select("#container");
@@ -8,19 +8,19 @@ export const loadGraph = () => {
     const centerX = width / 2;
     const centerY = height / 2;
 
-    const { nodes, links } = data;
+    const { nodes, links } = data.data;
 
     let nodeData = [];
     let linkData = []
 
     const nodeMain = nodes.find((item) => item.nodeType === "root");
-    const linkMain = links.filter((item) => item.target === nodeMain.id);
+    const linkMain = links.filter((item) => item.target === nodeMain.uuid);
 
     //Find Node Main
     linkData = linkMain
     nodeData.push(nodeMain)
     linkMain.forEach((link) => {
-        nodeData.push(nodes.find((n) => n.id === link.source));
+        nodeData.push(nodes.find((n) => n.uuid === link.source));
     });
 
     const simulation = d3
@@ -52,27 +52,27 @@ export const loadGraph = () => {
                 }
             })
         )
-        .force("link", d3.forceLink(linkData).id((d) => d.id)
+        .force("link", d3.forceLink(linkData).id((d) => d.uuid)
             .distance((d) => {
                 switch (d.source.nodeType) {
                     case 'business_unit_root':
                         switch (d.target.nodeType) {
                             case "root": return 250;
-                            case "goal": return 300;
+                            case "so": return 300;
                             case "key_result": return 125;
                             default: return 125
                         }
                     case 'goal':
                         switch (d.target.nodeType) {
                             case "root": return 250;
-                            case "goal": return 300;
+                            case "so": return 300;
                             case "key_result": return 125;
                             case "business_unit_root": return 300
                             default: return 125
                         }
                     case 'key_result':
                         switch (d.target.nodeType) {
-                            case "goal": return 125;
+                            case "so": return 125;
                             case "business_unit_root": return 125;
                             default: return 125
                         }
@@ -84,21 +84,21 @@ export const loadGraph = () => {
                     case 'business_unit_root':
                         switch (d.target.nodeType) {
                             case "root": return 2;
-                            case "goal": return 2;
+                            case "so": return 2;
                             case "key_result": return 2;
                             default: return 2
                         }
                     case 'goal':
                         switch (d.target.nodeType) {
                             case "root": return 2;
-                            case "goal": return 2;
+                            case "so": return 2;
                             case "key_result": return 2;
                             case "business_unit_root": return 2
                             default: return 2
                         }
                     case 'key_result':
                         switch (d.target.nodeType) {
-                            case "goal": return 2;
+                            case "so": return 2;
                             case "business_unit_root": return 2;
                             default: return 2
                         }
@@ -181,7 +181,7 @@ export const loadGraph = () => {
     let nodeContainer = container.append('g').attr('id', 'nodeContainer')
 
     nodeData.forEach(d => {
-        const nodeDetail = nodeContainer.append('g').attr('class', `graphNode_${d.id}`)
+        const nodeDetail = nodeContainer.append('g').attr('class', `graphNode_${d.uuid}`)
 
         let radius = null;
         let stroke = null;
@@ -197,7 +197,7 @@ export const loadGraph = () => {
                 fill = "#fcfcfc";
                 text = d.title
                 break;
-            case "goal":
+            case "so":
                 radius = 55;
                 stroke = "#669C89"
                 strokeWidth = 5;
@@ -234,8 +234,8 @@ export const loadGraph = () => {
         // title
         // const titleContainer =  text.append('text').attr('font-size', 14).attr('text-anchor', 'middle')
 
-        if (links.find(item => item.target === d.id)) {
-            nodeContainer.append('circle').attr('class', `collapseNode_${d.id}`).attr('r', 10).on('click', (event) => {
+        if (links.find(item => item.target === d.uuid)) {
+            nodeContainer.append('circle').attr('class', `collapseNode_${d.uuid}`).attr('r', 10).on('click', (event) => {
                 handleOnCollapseNode(d)
             })
         }
@@ -249,8 +249,10 @@ export const loadGraph = () => {
 
         nodeContainer.selectAll('g').remove();
         nodeContainer.selectAll('circle').remove();
-        link.selectAll("line").data(links, (link) => link.id);
+        let linkNew = link.selectAll("line").data(links, (link) => link.uuid);
         link.exit().remove();
+
+        link.merge(linkNew);
 
         link = container.select('#linkContainer')
             .selectAll("line")
@@ -259,7 +261,7 @@ export const loadGraph = () => {
             .attr("stroke-width", 2)
 
         nodeData.forEach(d => {
-            const nodeDetail = nodeContainer.append('g').attr('class', `graphNode_${d.id}`).style('cursor', 'pointer')
+            const nodeDetail = nodeContainer.append('g').attr('class', `graphNode_${d.uuid}`).style('cursor', 'pointer')
             let radius = null;
             let stroke = null;
             let strokeWidth = null;
@@ -274,7 +276,7 @@ export const loadGraph = () => {
                     fill = "#fcfcfc";
                     text = d.title
                     break;
-                case "goal":
+                case "so":
                     radius = 55;
                     stroke = "#669C89"
                     strokeWidth = 5;
@@ -309,8 +311,8 @@ export const loadGraph = () => {
             nodeDetail.call(dragInteraction)
             nodeDetail.merge(nodeDetail)
 
-            if (links.find(item => item.target === d.id)) {
-                nodeContainer.append('circle').attr('class', `collapseNode_${d.id}`).attr('r', 10).on('click', () => {
+            if (links.find(item => item.target === d.uuid)) {
+                nodeContainer.append('circle').attr('class', `collapseNode_${d.uuid}`).attr('r', 10).on('click', () => {
                     handleOnCollapseNode(d)
                 })
             }
@@ -330,11 +332,11 @@ export const loadGraph = () => {
             .attr("y2", (d) => d.target.y);
         
         nodeData.forEach(node => {
-            nodeContainer.select(`.graphNode_${node.id}`).select('circle').attr('cx', node.x).attr('cy', node.y)
-            nodeContainer.select(`.graphNode_${node.id}`).select('text').attr('x', node.x).attr('y', node.y)
+            nodeContainer.select(`.graphNode_${node.uuid}`).select('circle').attr('cx', node.x).attr('cy', node.y)
+            nodeContainer.select(`.graphNode_${node.uuid}`).select('text').attr('x', node.x).attr('y', node.y)
             let x = 0;
             let y = 0;
-            const targetInfo = linkData?.find(link => link?.source?.id === node?.id)?.target
+            const targetInfo = linkData?.find(link => link?.source?.uuid === node?.uuid)?.target
 
             if (targetInfo) {
                 let nodeSize = 0
@@ -342,7 +344,7 @@ export const loadGraph = () => {
                     case "root":
                         nodeSize = 100;
                         break;
-                    case "goal":
+                    case "so":
                         nodeSize = 55;
                         break;
                     case "key_result":
@@ -352,22 +354,23 @@ export const loadGraph = () => {
                 }
 
                 let r = Math.atan2(-targetInfo.y + node.y, -targetInfo.x + node.x)
-                r > -2.6 && r <= -1 ? r = -2.6 : r > -1 && r < -.6 && (r = -.6);
+                // r > -2.6 && r <= -1 ? r = -2.6 : r > -1 && r < -.6 && (r = -.6);
                 const a = nodeSize + 15;
 
                 x = node.x + a * Math.cos(r)
                 y = node.y + a * Math.sin(r)
             }
-            nodeContainer.select(`.collapseNode_${node.id}`).attr('cx', x).attr('cy', y)
+            nodeContainer.select(`.collapseNode_${node.uuid}`).attr('cx', x).attr('cy', y)
         })
     });
 
 
     const handleOnCollapseNode = (data) => {
         const node = [];
-        const link = links.filter((item) => item.target === data.id);
+        const link = links.filter((item) => item.target === data.uuid);
         link.forEach((link) => {
-            const nodeItem = nodes.find((n) => n.id === link.source);
+            const nodeItem = nodes.find((n) => n.uuid === link.source);
+
             nodeItem.x = data.x;
             nodeItem.y = data.y;
             node.push(nodeItem);
@@ -386,7 +389,7 @@ export const loadGraph = () => {
             simulation.force("collision", d3.forceCollide().radius(d => getNodeCollisionRadius(d)));
             simulation.force("charge", d3.forceManyBody().strength(d => getNodeChargeStrength(d)));
             simulation.alpha(0.05).restart();
-        }, 500);
+        }, 0);
     }
     
     function getNodeCollisionRadius(d) {
@@ -422,7 +425,7 @@ export const loadGraph = () => {
     function getNodeChargeStrength(d) {
         switch (d.nodeType) {
             case 'root':
-                return -100;
+                return 0;
             case 'business_unit_root':
                 return -1000;
             case 'goal':
