@@ -1,7 +1,11 @@
 import * as d3 from "d3";
-import { data } from "./dataKWS";
+import { getData } from "./dataKWS";
 
-export const loadGraph = () => {
+const API_URL = 'http://localhost:3003/api/work-graph?cycleOkrUUID=861ffd82-95b2-4b54-b700-a243819a1dba';
+
+export const loadGraph = async () => {
+    const data = await getData(API_URL);
+
     const svg = d3.select("#container");
     const width = svg?._parents?.[0].clientWidth;
     const height = svg?._parents?.[0].clientHeight;
@@ -234,7 +238,7 @@ export const loadGraph = () => {
         // title
         // const titleContainer =  text.append('text').attr('font-size', 14).attr('text-anchor', 'middle')
 
-        if (links.find(item => item.target === d.uuid)) {
+        if (d['hasCollapseNode']) {
             nodeContainer.append('circle').attr('class', `collapseNode_${d.uuid}`).attr('r', 10).on('click', (event) => {
                 handleOnCollapseNode(d)
             })
@@ -311,7 +315,7 @@ export const loadGraph = () => {
             nodeDetail.call(dragInteraction)
             nodeDetail.merge(nodeDetail)
 
-            if (links.find(item => item.target === d.uuid)) {
+            if (d['hasCollapseNode']) {
                 nodeContainer.append('circle').attr('class', `collapseNode_${d.uuid}`).attr('r', 10).on('click', () => {
                     handleOnCollapseNode(d)
                 })
@@ -365,20 +369,26 @@ export const loadGraph = () => {
     });
 
 
-    const handleOnCollapseNode = (data) => {
-        const node = [];
-        const link = links.filter((item) => item.target === data.uuid);
-        link.forEach((link) => {
-            const nodeItem = nodes.find((n) => n.uuid === link.source);
+    const handleOnCollapseNode = async (data) => {
+        const nodes = [];
+        const links = [];
 
-            nodeItem.x = data.x;
-            nodeItem.y = data.y;
-            node.push(nodeItem);
+        
+        const uri = `http://localhost:3003/api/work-graph/collapse-nodes?strategicObjectiveUUID=${data.uuid}&nodeType=${data.nodeType}`;
+
+        const dataCollapse = await getData(uri);
+
+        dataCollapse.data.nodes.forEach((node) => {
+            node.x = data.x;
+            node.y = data.y;
+            nodes.push(node);
         });
 
+        links.push(...dataCollapse.data.links);
 
-        nodeData = [...nodeData, ...node];
-        linkData = [...linkData, ...link];
+        nodeData = [...nodeData, ...nodes];
+        linkData = [...linkData, ...links];
+
         // Tạm thời tắt các lực va chạm và xung điện
         simulation.force("collision", null);
         simulation.force("charge", null);
