@@ -32,7 +32,7 @@ export const loadGraph = () => {
                         return -100
                     case 'business_unit_root':
                         return -1e3
-                    case 'goal':
+                    case 'so':
                         switch (d.goalKind) {
                             case 'organization': return -1e3;
                             case 'team': return -800;
@@ -40,7 +40,7 @@ export const loadGraph = () => {
                             case 'business_unit': return -200;
                             default: return -1e3
                         }
-                    case 'key_result':
+                    case 'o':
                         switch (d.goalKind) {
                             case 'organization': return -1e3;
                             case 'team': return -1e3;
@@ -59,18 +59,18 @@ export const loadGraph = () => {
                         switch (d.target.nodeType) {
                             case "root": return 250;
                             case "so": return 300;
-                            case "key_result": return 125;
+                            case "o": return 125;
                             default: return 125
                         }
-                    case 'goal':
+                    case 'so':
                         switch (d.target.nodeType) {
                             case "root": return 250;
                             case "so": return 300;
-                            case "key_result": return 125;
+                            case "o": return 125;
                             case "business_unit_root": return 300
                             default: return 125
                         }
-                    case 'key_result':
+                    case 'o':
                         switch (d.target.nodeType) {
                             case "so": return 125;
                             case "business_unit_root": return 125;
@@ -85,18 +85,18 @@ export const loadGraph = () => {
                         switch (d.target.nodeType) {
                             case "root": return 2;
                             case "so": return 2;
-                            case "key_result": return 2;
+                            case "o": return 2;
                             default: return 2
                         }
-                    case 'goal':
+                    case 'so':
                         switch (d.target.nodeType) {
                             case "root": return 2;
                             case "so": return 2;
-                            case "key_result": return 2;
+                            case "o": return 2;
                             case "business_unit_root": return 2
                             default: return 2
                         }
-                    case 'key_result':
+                    case 'o':
                         switch (d.target.nodeType) {
                             case "so": return 2;
                             case "business_unit_root": return 2;
@@ -110,7 +110,7 @@ export const loadGraph = () => {
             switch (d.nodeType) {
                 case 'root': return 200;
                 case 'business_unit_root': return 120;
-                case 'goal':
+                case 'so':
                     switch (d.goalKind) {
                         case 'organization': return 120;
                         case 'team': return 80;
@@ -118,7 +118,7 @@ export const loadGraph = () => {
                         case 'business_unit': return 40;
                         default: return 40;
                     }
-                case 'key_result':
+                case 'o':
                     switch (d.goalKind) {
                         case 'organization': return 48;
                         case 'team': return 20;
@@ -204,7 +204,7 @@ export const loadGraph = () => {
                 fill = "#669C89";
                 text = `${d.progress * 100}%`
                 break;
-            case "key_result":
+            case "o":
                 radius = 30;
                 stroke = "yellow"
                 strokeWidth = 2;
@@ -283,7 +283,7 @@ export const loadGraph = () => {
                     fill = "#669C89";
                     text = `${d.progress * 100}%`
                     break;
-                case "key_result":
+                case "o":
                     radius = 30;
                     stroke = "yellow"
                     strokeWidth = 2;
@@ -347,7 +347,7 @@ export const loadGraph = () => {
                     case "so":
                         nodeSize = 55;
                         break;
-                    case "key_result":
+                    case "o":
                         nodeSize = 30;
                         break;
                     default: break;
@@ -396,8 +396,8 @@ export const loadGraph = () => {
         switch (d.nodeType) {
             case 'root': return 200;
             case 'business_unit_root': return 120;
-            case 'goal': return getGoalCollisionRadius(d.goalKind);
-            case 'key_result': return getKeyResultCollisionRadius(d.goalKind);
+            case 'so': return getGoalCollisionRadius(d.goalKind);
+            case 'o': return getKeyResultCollisionRadius(d.goalKind);
             default: return 40;
         }
     }
@@ -428,9 +428,9 @@ export const loadGraph = () => {
                 return 0;
             case 'business_unit_root':
                 return -1000;
-            case 'goal':
+            case 'so':
                 return getGoalChargeStrength(d.goalKind);
-            case 'key_result':
+            case 'o':
                 return getKeyResultChargeStrength(d.goalKind);
             default:
                 return -1000;
